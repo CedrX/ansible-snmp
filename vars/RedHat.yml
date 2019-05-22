@@ -1,0 +1,3 @@
+snmp_service_name: 'snmpd'
+snmp_configuration_file_path: '/etc/snmp/snmpd.conf'
+snmp_package_name: 'net-snmp'

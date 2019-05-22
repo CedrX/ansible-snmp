@@ -1,0 +1,54 @@
+---
+# tasks file for snmp
+- name: Include OS-specific variables.
+  #include_vars: "{{ ansible_os_family }}.yml"
+  include_vars: '{{ ansible_os_family }}.yml'
+
+- name: Install snmp
+  become: true
+  package:
+    name: "{{ snmp_package_name }}"
+  tags: install_package
+
+- name: check create snmp config
+  become: true
+  template:
+    src: "snmpd.conf.j2"
+    dest: "/etc/snmp/{{ snmp_configuration_file_path }}"
+    owner: root
+    group: root
+    mode: 0600
+  register: check_snmp
+  check_mode: true
+  tags:
+    - snmp_configuration
+
+- block:
+
+    - name: stopped snmp
+      become: true
+      service:
+        name: "{{ snmp_service_name }}"
+        state: stopped
+
+    - name: create snmp config
+      become: true
+      template:
+        src: "snmpd.conf.j2"
+        dest: "{{ snmp_configuration_file_path }}"
+        owner: root
+        group: root
+        mode: 0644
+      notify:
+        - restart snmp
+        - enabled snmp
+
+    - name: started snmp
+      become: true
+      service:
+        name: "{{ snmp_service_name }}"
+        state: started
+
+  when: check_snmp.changed
+  tags:
+    - snmp_configuration
